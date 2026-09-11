@@ -5,3 +5,4 @@
 | Step | Description | Result | Reason |
 |---|---|---|---|
 | 0 | Naive `SELECT COUNT(*)` on `communication_log` | 30 | Starting point. All 30 rows in the raw dataset fall within the basic scope (merchant 501, type 2, Oct 2026). |
+| 1 | Filter `creation_status != 'approval_awaiting'` and `processing_status = 'processed'` | 26 | 4 campaigns are dropped because they haven't cleared approval, even though sends exist. |
