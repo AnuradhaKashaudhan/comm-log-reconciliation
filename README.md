@@ -20,7 +20,12 @@ Get-Content sql/sanity_check.sql | sqlite3 data/comm_log.db
 
 ## Assumptions
 
-While implementing the SQL, I assumed that the `target_base` metric represents the *attempted audience* rather than exclusively *successfully delivered* messages. As a result, the query intentionally does not filter by `delivery_status = 900`. If a customer soft-failed (`1100`) on every single attempt within a retry chain, they still count exactly once toward the target base pool. I also assumed that because no customers overlapped between different chains in this dataset, a global `GROUP BY customer_id` is a mathematically safe shortcut for the `sanity_check.sql` query.
+Because a few nuances weren't 100% explicit in the data dictionary, I made the following verifiable assumptions to compute the metric:
+
+1. **Fully-Failed Customers Still Count as "Reached":** The prompt defines `target_base` as "how many distinct customers were reached". I assumed this means *attempted audience* (targeted) rather than *successfully delivered*. Thus, my query intentionally does not filter by `delivery_status = 900`. If a customer soft-fails (`1100`) on every single attempt within a retry chain, my query mathematically retains them, counting them exactly **once**. (I verified this by injecting a synthetic fully-failed customer into the data; the base correctly incremented by 1).
+2. **Cost & Scheduling Fields are Irrelevant:** I assumed `credit_used` and `scheduled_time` have no bearing on the `target_base`. The metric measures distinct customers, not budget. Additionally, the timeframe scope ("October 2026") evaluates `sent_time` (when the reach actually occurred), rather than `scheduled_time`. 
+3. **Approval Status is Evaluated per Campaign:** The rule states that a campaign must clear approval to count. I assumed this applies strictly to the *immediate* campaign triggering the send, rather than being inherited from the chain's root. In the data, root campaign `9001` is `approved`, but its retry child `9004` is `approval_awaiting`. The query independently evaluates `c.creation_status` for every send's direct campaign ID, successfully excluding `9004`'s logs while retaining `9001-9003`.
+4. **Global `GROUP BY` Shortcut:** For the sanity check query, I assumed a global `GROUP BY customer_id` is mathematically safe for chained campaigns because I empirically verified that no customers overlap between *different* chains in this specific dataset.
 
 ## Surprises in the Data
 

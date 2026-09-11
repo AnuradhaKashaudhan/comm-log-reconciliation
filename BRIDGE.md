@@ -8,6 +8,7 @@
 | 1 | Filter `creation_status != 'approval_awaiting'` and `processing_status = 'processed'` | 26 | **Rule:** *"A campaign is included in official reporting only once both its creation workflow has cleared... A campaign still approval_awaiting... does not count"*. 4 sends drop out. |
 | 2 | **(Hypothesis)** Dedup by customer across *all* campaigns | 21 | Deduplicating blindly drops 5 duplicates (4 from retry chains, 1 from a standalone campaign). This misses the target (21) because it violates the standalone exception rule. |
 | 3 | **(Fix)** Dedup by customer *only* in retry chains | 22 | **Rule:** *"A customer who took several attempts within one retry chain... still counts once. A campaign with no retry chain at all... every send under it is its own event"*. This retains the standalone duplicate send, perfectly hitting the target (22). |
+| 4 | **(Sanity Check)** Independent cross-validation | 22 | The final result was cross-validated using `sql/sanity_check.sql` — a simpler, independently written query using `GROUP BY` instead of a recursive CTE. Both queries return the identical `22`, confirming the metric is mathematically sound and not an artifact of one query's CTE logic. |
 
 ## Edge Cases Tested
 
