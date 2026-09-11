@@ -2,15 +2,25 @@
 
 This repository contains the SQL queries and step-by-step reasoning used to reconcile the raw `communication_log` data to Finance's `target_base` of **22** for merchant `501` in October 2026.
 
-## How to Run
+## How to Verify
 
-You can execute the final reconciliation query against the provided SQLite database using the following command:
+You can execute the primary reconciliation query, as well as a simpler `GROUP BY` sanity-check query, using the following commands depending on your terminal:
 
+**Bash / Unix:**
+```bash
+sqlite3 data/comm_log.db < sql/reconciliation.sql
+sqlite3 data/comm_log.db < sql/sanity_check.sql
+```
+
+**PowerShell (Windows):**
 ```powershell
 Get-Content sql/reconciliation.sql | sqlite3 data/comm_log.db
-# OR from inside the sqlite prompt:
-# sqlite3 data/comm_log.db ".read sql/reconciliation.sql"
+Get-Content sql/sanity_check.sql | sqlite3 data/comm_log.db
 ```
+
+## Assumptions
+
+While implementing the SQL, I assumed that the `target_base` metric represents the *attempted audience* rather than exclusively *successfully delivered* messages. As a result, the query intentionally does not filter by `delivery_status = 900`. If a customer soft-failed (`1100`) on every single attempt within a retry chain, they still count exactly once toward the target base pool. I also assumed that because no customers overlapped between different chains in this dataset, a global `GROUP BY customer_id` is a mathematically safe shortcut for the `sanity_check.sql` query.
 
 ## Surprises in the Data
 
