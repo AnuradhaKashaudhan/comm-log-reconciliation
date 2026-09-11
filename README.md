@@ -6,8 +6,10 @@ This repository contains the SQL queries and step-by-step reasoning used to reco
 
 You can execute the final reconciliation query against the provided SQLite database using the following command:
 
-```bash
-sqlite3 data/comm_log.db < sql/reconciliation.sql
+```powershell
+Get-Content sql/reconciliation.sql | sqlite3 data/comm_log.db
+# OR from inside the sqlite prompt:
+# sqlite3 data/comm_log.db ".read sql/reconciliation.sql"
 ```
 
 ## Surprises in the Data
